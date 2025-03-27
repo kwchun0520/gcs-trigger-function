@@ -9,5 +9,4 @@ gcloud functions deploy gcs-trigger-function \
   --trigger-event-filters="bucket=my-new-project-bucket-123" \
   --entry-point=main \
   --runtime python39 \
-  --region us-east1 \
-  --allow-unauthenticated
+  --region us-east1 
