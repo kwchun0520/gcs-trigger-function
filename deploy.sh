@@ -6,7 +6,7 @@ gcloud functions deploy gcs-trigger-function \
   --gen2 \
   --memory=128MiB \
   --trigger-event-filters="type=google.cloud.storage.object.v1.finalized" \
-  --trigger-event-filters="bucket=my-new-project-bucket-123" \
+  --trigger-event-filters="bucket=my-new-project-bucket-1234" \
   --entry-point=main \
   --runtime python39 \
-  --region us-east1 
+  --region us-central1 
