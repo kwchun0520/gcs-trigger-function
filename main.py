@@ -22,7 +22,7 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     if file_path not in CONFIG.tables:
         logger.warning(f"Table {file_path} is not in the list of tables to process")
         return {"response":"No action taken"}
-    
+      
     if not file_path.endswith(".csv"):
         logger.warning(f"File {file_path} is not a CSV file")
         return {"response":"No action taken"}
@@ -59,8 +59,6 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     
     return {"response":"File processed successfully"}
 
-    
-
 
 if __name__ == '__main__':
 
@@ -69,7 +67,7 @@ if __name__ == '__main__':
         "type": "com.example.sampletype1",
         "source": "https://example.com/event-producer",
     }
-    
+
     data = {"name": "my_dataset/my_table2/test.csv", "bucket": "my-new-project-bucket-1234"}
     event = CloudEvent(attributes, data)
     main(event)
