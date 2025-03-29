@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-export GOOGLE_APPLICATION_CREDENTIALS=service_account.json
 set -x
+export $(cat .env | xargs)
 poetry export -f requirements.txt --output requirements.txt --without-hashes
 gcloud functions deploy gcs-trigger-function \
   --gen2 \
@@ -9,4 +9,4 @@ gcloud functions deploy gcs-trigger-function \
   --trigger-event-filters="bucket=my-new-project-bucket-1234" \
   --entry-point=main \
   --runtime python39 \
-  --region us-central1 
+  --region us-central1
