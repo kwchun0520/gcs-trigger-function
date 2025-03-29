@@ -36,7 +36,7 @@ def write_to_table(data: list[dict], table: str) -> None:
     if errors:
         logger.error(errors)
         raise RuntimeError(
-            "Something went wrong"
+            "Data upload to BigQuery failed. Check the logs for more information"
         )
     return None
 
@@ -55,10 +55,15 @@ def move_delta_to_table(delta:str ,datetime_str:str, table:str) -> None:
     SELECT * FROM `{delta}`
     WHERE DATETIME(last_update) = DATETIME("{datetime_str}")
     """
-    print(query)
     job = _client().query(query)
     job.result()
-    logger.info(f"Data ingested successfully")
+    if job.errors:
+        logger.error(job.errors)
+        raise RuntimeError(
+            f"Data ingestion from {delta} to {table} failed"
+        )
+    logger.info(f"Data ingested from {delta} to {table} successfully")
+
     return None
 
 

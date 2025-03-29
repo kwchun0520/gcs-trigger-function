@@ -1,0 +1,4 @@
+tables:
+  - my_dataset.my_table
+  - my_dataset.my_other_table
+delta_suffix: delta

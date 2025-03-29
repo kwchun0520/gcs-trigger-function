@@ -1,10 +1,11 @@
 import functions_framework
 from loguru import logger
 from typing import Dict
-import google.auth
 from datetime import datetime,timezone
-from src.gcs_trigger_function.gbq import write_to_table, move_delta_to_table, get_table
-from src.gcs_trigger_function.gcs import download_file
+from src.gcs_trigger_function.config import CONFIG
+from src.gcs_trigger_function.google import get_project
+from src.gcs_trigger_function.bigquery import write_to_table, move_delta_to_table, get_table
+from src.gcs_trigger_function.storage import download_file
 from cloudevents.http import CloudEvent
 
 
@@ -18,13 +19,13 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     file_path:str = data["name"]
     bucket_name:str = data["bucket"]
 
-    if not file_path.endswith(".csv"):
+    if not file_path.endswith(".csv") or not file_path.startswith(""):
         logger.warning(f"File {file_path} is not a CSV file")
         return {"response":"No action taken"}
 
     logger.info(f"Processing file: {file_path}")
     dataset_name,table_name,_ = file_path.split("/")
-    _, project = google.auth.default()
+    project = get_project()
 
     try:
         get_table(table=f"{dataset_name}.{table_name}")
@@ -37,8 +38,8 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     data = download_file(bucket_name=bucket_name, file_path=file_path)
     updated_data = list(map(lambda d: {**d, "last_update":datetime_str}, data))
 
-    table = f"{project}.{dataset_name}.{table_name}"
-    delta = f"{project}.{dataset_name}.{table_name}_delta"
+    destination_table = f"{project}.{dataset_name}.{table_name}"
+    delta = f"{destination_table}{CONFIG.delta_suffix}"
 
     try:
         write_to_table(data=updated_data, table=delta)
@@ -46,16 +47,25 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
         logger.error(e)
         return {"response":"An error occurred"}
     
-    move_delta_to_table(delta=delta, datetime_str=datetime_str, table=table)
+    try:
+        move_delta_to_table(delta=delta, datetime_str=datetime_str, table=destination_table)
+    except Exception as e:
+        logger.error(e)
+        return {"response":"An error occurred"}
+    
     return {"response":"File processed successfully"}
+
+    
 
 
 if __name__ == '__main__':
 
+    ##create a fake CloudEvent
     attributes = {
         "type": "com.example.sampletype1",
         "source": "https://example.com/event-producer",
     }
+    
     data = {"name": "my_dataset/my_table2/test.csv", "bucket": "my-new-project-bucket-1234"}
     event = CloudEvent(attributes, data)
     main(event)
