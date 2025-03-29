@@ -26,8 +26,10 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     dataset_name,table_name,_ = file_path.split("/")
     _, project = google.auth.default()
 
-    if not get_table(project=project, dataset_name=dataset_name, table_name=table_name):
-        logger.warning(f"Table {project}.{dataset_name}.{table_name} does not exist")
+    try:
+        get_table(table=f"{dataset_name}.{table_name}")
+    except Exception as e:
+        logger.error(e)
         return {"response":"No action taken"}
     
     datetime_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
@@ -35,8 +37,8 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     data = download_file(bucket_name=bucket_name, file_path=file_path)
     updated_data = list(map(lambda d: {**d, "last_update":datetime_str}, data))
 
-    delta = f"{project}.{dataset_name}.{table_name}_delta"
     table = f"{project}.{dataset_name}.{table_name}"
+    delta = f"{project}.{dataset_name}.{table_name}_delta"
 
     try:
         write_to_table(data=updated_data, table=delta)
@@ -45,8 +47,6 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
         return {"response":"An error occurred"}
     
     move_delta_to_table(delta=delta, datetime_str=datetime_str, table=table)
-
-
     return {"response":"File processed successfully"}
 
 
@@ -56,6 +56,6 @@ if __name__ == '__main__':
         "type": "com.example.sampletype1",
         "source": "https://example.com/event-producer",
     }
-    data = {"name": "my_dataset/my_table/test.csv", "bucket": "my-new-project-bucket-1234"}
+    data = {"name": "my_dataset/my_table2/test.csv", "bucket": "my-new-project-bucket-1234"}
     event = CloudEvent(attributes, data)
     main(event)
