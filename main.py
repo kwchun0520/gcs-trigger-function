@@ -19,7 +19,11 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     file_path:str = data["name"]
     bucket_name:str = data["bucket"]
 
-    if not file_path.endswith(".csv") or not file_path.startswith(""):
+    if file_path not in CONFIG.tables:
+        logger.warning(f"Table {file_path} is not in the list of tables to process")
+        return {"response":"No action taken"}
+    
+    if not file_path.endswith(".csv"):
         logger.warning(f"File {file_path} is not a CSV file")
         return {"response":"No action taken"}
 
@@ -39,16 +43,16 @@ def main(cloud_event:CloudEvent) -> Dict[str,str]:
     updated_data = list(map(lambda d: {**d, "last_update":datetime_str}, data))
 
     destination_table = f"{project}.{dataset_name}.{table_name}"
-    delta = f"{destination_table}{CONFIG.delta_suffix}"
+    delta_table = f"{destination_table}_{CONFIG.delta_suffix}"
 
     try:
-        write_to_table(data=updated_data, table=delta)
+        write_to_table(data=updated_data, table=delta_table)
     except Exception as e:
         logger.error(e)
         return {"response":"An error occurred"}
     
     try:
-        move_delta_to_table(delta=delta, datetime_str=datetime_str, table=destination_table)
+        move_delta_to_table(delta=delta_table, datetime_str=datetime_str, table=destination_table)
     except Exception as e:
         logger.error(e)
         return {"response":"An error occurred"}

@@ -3,3 +3,4 @@
 *.lock
 .gcloudignore
 */__pycache__/
+.env
