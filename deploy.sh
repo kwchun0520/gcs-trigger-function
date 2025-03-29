@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-export GOOGLE_APPLICATION_CREDENTIALS=service_account.json
 set -x
+export $(cat .env | xargs)
 poetry export -f requirements.txt --output requirements.txt --without-hashes
 gcloud functions deploy gcs-trigger-function \
   --gen2 \
